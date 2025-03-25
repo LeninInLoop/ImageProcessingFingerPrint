@@ -259,7 +259,7 @@ class Visualizer:
             if titles and i < len(titles):
                 ax.set_title(titles[i], fontsize=12, color='black', pad=6)
 
-        plt.subplots_adjust(wspace=0.5, hspace=0.5)  # Adjust spacing for exact look
+        plt.subplots_adjust(wspace=0.5, hspace=0.2)  # Adjust spacing
 
         if filepath_to_save is not None:
             plt.savefig(filepath_to_save, dpi=300, bbox_inches='tight')
