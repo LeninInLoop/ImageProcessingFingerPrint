@@ -86,15 +86,15 @@ class ConvolutionProcessor:
         return pad_width, pad_height
 
     @staticmethod
-    def apply_padding(image: np.ndarray, pad_width: int, pad_height: int) -> np.ndarray:
+    def apply_padding(image: np.ndarray, pad_width: int, pad_height: int, pad_value: int = 0 ) -> np.ndarray:
         """Apply zero padding to an image."""
         if image.ndim != 2:
             raise ValueError("Image array must be 2D")
 
-        padded_image = np.zeros(
+        padded_image = np.ones(
             (image.shape[0] + 2 * pad_height, image.shape[1] + 2 * pad_width),
             dtype=image.dtype
-        )
+        ) * pad_value
         padded_image[pad_height:-pad_height, pad_width:-pad_width] = image
 
         return padded_image
@@ -104,7 +104,8 @@ class ConvolutionProcessor:
             image: np.ndarray,
             kernel: np.ndarray,
             pad_width: Optional[int] = None,
-            pad_height: Optional[int] = None
+            pad_height: Optional[int] = None,
+            perform_padding: Optional[bool] = False
     ) -> np.ndarray:
         """Apply convolution operation to an image using the given kernel."""
         if image.ndim != 2:
@@ -116,12 +117,14 @@ class ConvolutionProcessor:
         if pad_width is None or pad_height is None:
             pad_width, pad_height = ConvolutionProcessor.calculate_padding_size(kernel)
 
-        new_height = max(1, image.shape[0] - 2 * pad_height)
-        new_width = max(1, image.shape[1] - 2 * pad_width)
+        if perform_padding:
+            image = ConvolutionProcessor.apply_padding(image, pad_width, pad_height, pad_value=255)
+
+        k_height, k_width = kernel.shape
+        new_height = image.shape[0] - k_height + 1
+        new_width = image.shape[1] - k_width + 1
 
         result = np.zeros((new_height, new_width), dtype=np.float32)
-        k_height, k_width = kernel.shape
-
         for i in range(new_height):
             for j in range(new_width):
                 roi = image[i:i + k_height, j:j + k_width]
@@ -303,7 +306,8 @@ def main():
     filtered_images = [
         ConvolutionProcessor.apply_convolution(
             normalized_image_array,
-            kernel
+            kernel,
+            perform_padding=True
         ) for kernel in gabor_kernel_vector
     ]
 
