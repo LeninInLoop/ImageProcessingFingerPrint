@@ -59,10 +59,8 @@ class ImageUtils:
         M0 = np.mean(img)  # current (image) mean
         Var0 = np.var(img)  # current (image) variance
 
-        # Prepare output array
         out = np.zeros_like(img, dtype=np.float32)
 
-        # Apply piecewise normalization
         for i in range(img.shape[0]):
             for j in range(img.shape[1]):
                 if img[i, j] > desired_mean:
@@ -143,28 +141,27 @@ class ConvolutionProcessor:
             raise ValueError("compute_aad_map expects a 2D grayscale image.")
 
         height, width = image_array.shape
-        n_blocks_y = height // block_size
-        n_blocks_x = width // block_size
+        n_blocks_y = (height + block_size - 1) // block_size
+        n_blocks_x = (width + block_size - 1) // block_size
 
-        # Create an empty 2D array to store the AAD of each block
-        aad_map = np.zeros((n_blocks_y, n_blocks_x), dtype=np.float32)
+        aad_map_full = np.zeros_like(image_array, dtype=np.float32)
 
-        # Loop over blocks
         for by in range(n_blocks_y):
             for bx in range(n_blocks_x):
+
                 start_y = by * block_size
-                end_y = start_y + block_size
+                end_y = min(start_y + block_size, height)
                 start_x = bx * block_size
-                end_x = start_x + block_size
+                end_x = min(start_x + block_size, width)
 
                 block = image_array[start_y:end_y, start_x:end_x]
                 mean_val = np.mean(block)
-                # AAD = average of absolute deviations from mean
                 aad_val = np.mean(np.abs(block - mean_val))
 
-                aad_map[by, bx] = aad_val
+                aad_map_full[start_y:end_y, start_x:end_x] = aad_val
 
-        return aad_map
+        return aad_map_full
+
 
 class ImageFilter:
     """Class for different image filtering operations."""
